@@ -160,7 +160,8 @@
 
   <script>
     function formatPlace(place) {
-        const mapsUrl = `https://maps.google.com/?q=place_id:${place.place_id}`;
+        const query = `${place.name} ${place.vicinity}`;
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
         return `
             <a href="${mapsUrl}" target="_blank" style="text-decoration: none; color: inherit;">
             <div style="font-size:0.8rem;">${place.name}</div>
@@ -190,7 +191,7 @@
         const apiUrl = `https://luncherizer.ryandarras.workers.dev/?lat=${lat}&lng=${lng}&radius=${radius}&keyword=${keyword}&minprice=${price}&maxprice=${price}`;
 
         $.getJSON(apiUrl, data => {
-          const places = data.results.filter(p => p.rating >= 3.5);
+          const places = data.results.filter(p => p.rating >= 3);
           if (places.length < 3) {
             alert("Not enough choices. Try different filters!");
             return;
