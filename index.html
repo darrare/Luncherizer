@@ -121,7 +121,7 @@
 
   <div class="filters">
     <select id="cuisine">
-    <option value="fast food">Fast Food</option>
+      <option value="fast food" selected>Fast Food</option>
       <option value="">Any Cuisine</option>
       <option value="mexican">Mexican</option>
       <option value="chinese">Chinese</option>
@@ -134,13 +134,13 @@
 
     <select id="radius">
       <option value="1600">1 mi</option>
-      <option value="4800" selected>3 mi</option>
+      <option value="3200" selected>2 mi</option>
+      <option value="4800" >3 mi</option>
       <option value="8000">5 mi</option>
-      <option value="16000">10 mi</option>
     </select>
 
     <select id="price">
-      <option value="">Any Price</option>
+      <option value="" selected>Any Price</option>
       <option value="0">$</option>
       <option value="1">$$</option>
       <option value="2">$$$</option>
@@ -151,9 +151,9 @@
   <button id="go" class="btn btn-arcade">🎯 GO!</button>
 
   <div class="results d-none" id="results">
-    <div id="gold" class="card-arcade gold"></div>
-    <div id="silver" class="card-arcade silver"></div>
-    <div id="bronze" class="card-arcade bronze"></div>
+    <div id="gold" class="card-arcade gold" style="min-height: 25px; min-width: 100%;"></div>
+    <div id="silver" class="card-arcade silver"style="min-height: 25px; min-width: 100%;"></div>
+    <div id="bronze" class="card-arcade bronze"style="min-height: 25px; min-width: 100%;"></div>
   </div>
 
   <div class="footer">darrare.github.io/Luncherizer Ⓒ 2025</div>
