@@ -162,7 +162,7 @@
     const MAX_CACHE_SIZE_MB = 20;
     const MAX_CACHE_SIZE_BYTES = MAX_CACHE_SIZE_MB * 1024 * 1024;
   
-    const resultsCache = new Map(); // key → { data, size }
+    const resultsCache = new Map();
     let currentCacheSize = 0;
   
     function getLocationKey(location) {
@@ -186,6 +186,7 @@
         const oldest = resultsCache.get(oldestKey);
         resultsCache.delete(oldestKey);
         currentCacheSize -= oldest.size;
+        console.log(`🧹 Cache evicted: ${oldestKey}`);
       }
       resultsCache.set(key, { data, size });
       currentCacheSize += size;
@@ -194,19 +195,41 @@
     async function fetchPlacesWithCache(filters, location) {
       const key = getCacheKey(filters, location);
       if (resultsCache.has(key)) {
+        console.log("✅ Using cached results for:", key);
         const cached = resultsCache.get(key);
         resultsCache.delete(key);
         resultsCache.set(key, cached);
         return cached.data;
-      } else {
-        const apiUrl = `https://luncherizer.ryandarras.workers.dev/?lat=${location.lat}&lng=${location.lng}&radius=${filters.radius}&keyword=${filters.keyword}&minprice=${filters.price}&maxprice=${filters.price}`;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-    
-        addToCache(key, data.results);
-        return data.results;
       }
+  
+      console.log("🔄 Fetching new results for:", key);
+      const apiUrl = `https://luncherizer.ryandarras.workers.dev/?lat=${location.lat}&lng=${location.lng}&radius=${filters.radius}&keyword=${filters.keyword}&minprice=${filters.price}&maxprice=${filters.price}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+  
+      addToCache(key, data.results);
+      return data.results;
     }
+  
+    let cachedLocation = null;
+  
+    navigator.geolocation.watchPosition(
+      pos => {
+        cachedLocation = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        };
+        console.log("📍 Location updated", cachedLocation);
+      },
+      err => {
+        console.warn("⚠️ Geolocation watch failed", err);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 10000
+      }
+    );
   
     function formatPlace(place) {
       const query = `${place.name} ${place.vicinity}`;
@@ -227,40 +250,36 @@
     }
   
     $('#go').click(async () => {
+      if (!cachedLocation) {
+        alert("Still acquiring location. Please wait a moment.");
+        return;
+      }
+  
       $('.results').removeClass('d-none');
       $('.card-arcade').html("🕹️ Loading...").css({ opacity: 0, transform: "scale(0.7)" });
   
-      navigator.geolocation.getCurrentPosition(async pos => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const location = { lat, lng };
+      const filters = {
+        radius: $('#radius').val(),
+        keyword: $('#cuisine').val(),
+        price: $('#price').val()
+      };
   
-        const filters = {
-          radius: $('#radius').val(),
-          keyword: $('#cuisine').val(),
-          price: $('#price').val()
-        };
+      const places = (await fetchPlacesWithCache(filters, cachedLocation)).filter(p => p.rating >= 3);
+      if (places.length < 3) {
+        alert("Not enough choices. Try different filters!");
+        return;
+      }
   
-        const places = (await fetchPlacesWithCache(filters, location)).filter(p => p.rating >= 3);
-        if (places.length < 3) {
-          alert("Not enough choices. Try different filters!");
-          return;
-        }
-  
-        const [gold, silver, bronze] = getRandomChoices(places, 3);
-        reveal($('#gold'), gold, 0.2);
-        reveal($('#silver'), silver, 0.5);
-        reveal($('#bronze'), bronze, 0.8);
-      }, () => {
-        alert("Please enable location services.");
-      });
+      const [gold, silver, bronze] = getRandomChoices(places, 3);
+      reveal($('#gold'), gold, 0.2);
+      reveal($('#silver'), silver, 0.5);
+      reveal($('#bronze'), bronze, 0.8);
     });
   
     function getRandomChoices(arr, count) {
       const shuffled = arr.sort(() => 0.5 - Math.random());
       return shuffled.slice(0, count);
     }
-  </script>
-  
+  </script>  
 </body>
 </html>
